@@ -11,6 +11,7 @@ import { Button } from "~/components/ui/button";
 import { Calendar } from "~/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
 import { cn } from "~/lib/utils";
+import { TrainerSelect } from "./_components/trainer-select";
 
 type TimeSlot = {
   id: string;
@@ -31,11 +32,23 @@ export default function BookPage() {
   const utils = api.useUtils();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [selectedTrainerId, setSelectedTrainerId] = useState<string | null>(null);
+  const [showTrainerSelect, setShowTrainerSelect] = useState(true);
 
   const { data: timeSlots, isLoading } = api.court.getAvailableTimeSlots.useQuery(
     { date: format(selectedDate, "yyyy-MM-dd") },
     {
       enabled: Boolean(selectedDate),
+    }
+  );
+
+  const { data: trainerTimeSlots } = api.trainer.getAvailableTimeSlots.useQuery(
+    { 
+      trainerId: selectedTrainerId ?? "",
+      date: format(selectedDate, "yyyy-MM-dd"),
+    },
+    {
+      enabled: Boolean(selectedDate) && Boolean(selectedTrainerId),
     }
   );
 
@@ -56,13 +69,47 @@ export default function BookPage() {
     },
   });
 
+  const handleDateSelect = (date: Date | undefined) => {
+    if (date) {
+      setSelectedDate(date);
+      setSelectedTime(null);
+      setSelectedTrainerId(null);
+      setShowTrainerSelect(true);
+    }
+  };
+
+  const handleTrainerSelect = (trainerId: string | null) => {
+    setSelectedTrainerId(trainerId);
+    setShowTrainerSelect(false);
+  };
+
+  const handleTimeSelect = (time: string) => {
+    setSelectedTime(time);
+  };
+
   const handleBooking = async (timeSlotId: string) => {
     try {
-      await createBooking.mutateAsync({ timeSlotId });
+      await createBooking.mutateAsync({ 
+        timeSlotId,
+        trainerId: selectedTrainerId ?? undefined
+      });
     } catch (error) {
       console.error("Ошибка при создании бронирования:", error);
     }
   };
+
+  // Фильтруем слоты по доступности тренера
+  const availableTimeSlots = selectedTrainerId && trainerTimeSlots
+    ? Object.entries(groupedSlots).reduce((acc, [time, slots]) => {
+        const trainerSlot = trainerTimeSlots.find(
+          (ts: { startTime: Date }) => format(new Date(ts.startTime), "HH:mm") === time
+        );
+        if (trainerSlot) {
+          acc[time] = slots;
+        }
+        return acc;
+      }, {} as Record<string, TimeSlot[]>)
+    : groupedSlots;
 
   return (
     <div className="space-y-8">
@@ -100,7 +147,7 @@ export default function BookPage() {
               <Calendar
                 mode="single"
                 selected={selectedDate}
-                onSelect={(date: Date | undefined) => date && setSelectedDate(date)}
+                onSelect={handleDateSelect}
                 initialFocus
                 locale={ru}
               />
@@ -121,27 +168,38 @@ export default function BookPage() {
             <p className="text-sm text-muted-foreground">На выбранную дату нет доступных слотов</p>
           </CardContent>
         </Card>
+      ) : showTrainerSelect ? (
+        <TrainerSelect
+          selectedDate={selectedDate}
+          onSelectTrainer={handleTrainerSelect}
+        />
       ) : selectedTime ? (
-        <div className="space-y-4">
+        <div className="space-y-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <ClockIcon className="h-5 w-5 text-primary mr-2" />
               <h2 className="text-xl font-semibold">{selectedTime}</h2>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setSelectedTime(null)}
-            >
-              Назад к выбору времени
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setSelectedTime(null);
+                  setSelectedTrainerId(null);
+                  setShowTrainerSelect(true);
+                }}
+              >
+                Назад к выбору тренера
+              </Button>
+            </div>
           </div>
 
           {/* Грунтовые корты */}
           <div className="space-y-2">
             <h3 className="text-lg font-medium">Грунтовые корты</h3>
             <div className="grid gap-4">
-              {(groupedSlots[selectedTime] as TimeSlot[])
+              {(availableTimeSlots[selectedTime] as TimeSlot[])
                 .filter((slot) => slot.court.surface === "CLAY")
                 .sort((a, b) => a.court.id.localeCompare(b.court.id))
                 .map((slot) => (
@@ -176,7 +234,7 @@ export default function BookPage() {
           <div className="space-y-2">
             <h3 className="text-lg font-medium">Хардовые корты</h3>
             <div className="grid gap-4">
-              {(groupedSlots[selectedTime] as TimeSlot[])
+              {(availableTimeSlots[selectedTime] as TimeSlot[])
                 .filter((slot) => slot.court.surface === "HARD")
                 .sort((a, b) => a.court.id.localeCompare(b.court.id))
                 .map((slot) => (
@@ -209,13 +267,13 @@ export default function BookPage() {
         </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-          {Object.entries(groupedSlots)
+          {Object.entries(availableTimeSlots)
             .sort(([timeA], [timeB]) => timeA.localeCompare(timeB))
             .map(([time, slots]) => (
               <Card 
                 key={time} 
                 className="hover:bg-accent/50 transition-colors cursor-pointer"
-                onClick={() => setSelectedTime(time)}
+                onClick={() => handleTimeSelect(time)}
               >
                 <CardContent className="flex flex-col items-center justify-center p-4">
                   <ClockIcon className="h-6 w-6 text-primary mb-1" />
