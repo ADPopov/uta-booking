@@ -21,11 +21,14 @@ type TimeSlot = {
     name: string;
     description: string;
     price: number;
+    surface: string;
+    id: string;
   };
 };
 
 export default function BookPage() {
   const router = useRouter();
+  const utils = api.useUtils();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
 
@@ -47,6 +50,8 @@ export default function BookPage() {
 
   const createBooking = api.court.createBooking.useMutation({
     onSuccess: () => {
+      utils.court.getUserBookings.invalidate();
+      utils.court.getAvailableTimeSlots.invalidate({ date: format(selectedDate, "yyyy-MM-dd") });
       router.push("/bookings");
     },
   });
@@ -131,32 +136,75 @@ export default function BookPage() {
               Назад к выбору времени
             </Button>
           </div>
-          <div className="grid gap-4">
-            {(groupedSlots[selectedTime] as TimeSlot[]).map((slot) => (
-              <Card key={slot.id} className="hover:bg-accent/50 transition-colors">
-                <CardContent className="flex items-center justify-between p-4">
-                  <div className="space-y-1">
-                    <div className="font-medium">{slot.court.name}</div>
-                    <div className="text-sm text-muted-foreground line-clamp-1">
-                      {slot.court.description}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center text-sm text-primary">
-                      <CurrencyDollarIcon className="h-5 w-5 mr-1" />
-                      {slot.court.price} ₽
-                    </div>
-                    <Button
-                      onClick={() => handleBooking(slot.id)}
-                      disabled={createBooking.isPending}
-                      size="sm"
-                    >
-                      {createBooking.isPending ? "..." : "Забронировать"}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+
+          {/* Грунтовые корты */}
+          <div className="space-y-2">
+            <h3 className="text-lg font-medium">Грунтовые корты</h3>
+            <div className="grid gap-4">
+              {(groupedSlots[selectedTime] as TimeSlot[])
+                .filter((slot) => slot.court.surface === "CLAY")
+                .sort((a, b) => a.court.id.localeCompare(b.court.id))
+                .map((slot) => (
+                  <Card key={slot.id} className="hover:bg-accent/50 transition-colors">
+                    <CardContent className="flex items-center justify-between p-4">
+                      <div className="space-y-1">
+                        <div className="font-medium">{slot.court.name}</div>
+                        <div className="text-sm text-muted-foreground line-clamp-1">
+                          {slot.court.description}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center text-sm text-primary">
+                          <CurrencyDollarIcon className="h-5 w-5 mr-1" />
+                          {slot.court.price} ₽
+                        </div>
+                        <Button
+                          onClick={() => handleBooking(slot.id)}
+                          disabled={createBooking.isPending}
+                          size="sm"
+                        >
+                          {createBooking.isPending ? "..." : "Забронировать"}
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+            </div>
+          </div>
+
+          {/* Хардовые корты */}
+          <div className="space-y-2">
+            <h3 className="text-lg font-medium">Хардовые корты</h3>
+            <div className="grid gap-4">
+              {(groupedSlots[selectedTime] as TimeSlot[])
+                .filter((slot) => slot.court.surface === "HARD")
+                .sort((a, b) => a.court.id.localeCompare(b.court.id))
+                .map((slot) => (
+                  <Card key={slot.id} className="hover:bg-accent/50 transition-colors">
+                    <CardContent className="flex items-center justify-between p-4">
+                      <div className="space-y-1">
+                        <div className="font-medium">{slot.court.name}</div>
+                        <div className="text-sm text-muted-foreground line-clamp-1">
+                          {slot.court.description}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center text-sm text-primary">
+                          <CurrencyDollarIcon className="h-5 w-5 mr-1" />
+                          {slot.court.price} ₽
+                        </div>
+                        <Button
+                          onClick={() => handleBooking(slot.id)}
+                          disabled={createBooking.isPending}
+                          size="sm"
+                        >
+                          {createBooking.isPending ? "..." : "Забронировать"}
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+            </div>
           </div>
         </div>
       ) : (
@@ -173,7 +221,8 @@ export default function BookPage() {
                   <ClockIcon className="h-6 w-6 text-primary mb-1" />
                   <div className="text-lg font-bold mb-1">{time}</div>
                   <div className="text-xs text-muted-foreground">
-                    {(slots as TimeSlot[]).length} корт
+                    {(slots as TimeSlot[]).filter(slot => slot.court.surface === "CLAY").length} грунт. • {" "}
+                    {(slots as TimeSlot[]).filter(slot => slot.court.surface === "HARD").length} хард
                   </div>
                 </CardContent>
               </Card>

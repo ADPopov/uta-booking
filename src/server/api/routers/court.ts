@@ -4,6 +4,41 @@ import {
   protectedProcedure,
   publicProcedure,
 } from "~/server/api/trpc";
+import { TRPCError } from "@trpc/server";
+import type { TimeSlot } from "~/types/prisma";
+
+type TimeSlotWithCourt = TimeSlot & {
+  court: {
+    id: string;
+    name: string;
+    description: string | null;
+    price: number;
+    surface: string;
+    createdAt: Date;
+    updatedAt: Date;
+  };
+};
+
+interface Court {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  surface: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface TimeSlot {
+  id: string;
+  courtId: string;
+  startTime: Date;
+  endTime: Date;
+  isBooked: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  court: Court;
+}
 
 export const courtRouter = createTRPCRouter({
   getAll: publicProcedure.query(async ({ ctx }) => {
@@ -49,7 +84,7 @@ export const courtRouter = createTRPCRouter({
         });
 
         console.log("Найдено слотов:", slots.length);
-        console.log("Слоты:", slots.map(slot => ({
+        console.log("Слоты:", slots.map((slot: TimeSlot) => ({
           id: slot.id,
           startTime: slot.startTime.toISOString(),
           endTime: slot.endTime.toISOString(),
@@ -60,7 +95,7 @@ export const courtRouter = createTRPCRouter({
         const now = new Date();
         console.log("Текущее время:", now.toISOString());
         
-        const availableSlots = slots.filter(slot => {
+        const availableSlots = slots.filter((slot: TimeSlot) => {
           const slotStartTime = new Date(slot.startTime);
           const isAvailable = slotStartTime > now;
           console.log("Слот:", {
@@ -127,7 +162,7 @@ export const courtRouter = createTRPCRouter({
 
         // Фильтруем слоты, оставляя только те, которые еще не наступили
         const now = new Date();
-        const availableSlots = slots.filter(slot => {
+        const availableSlots = slots.filter((slot: TimeSlot) => {
           const slotStartTime = new Date(slot.startTime);
           return slotStartTime > now;
         });
@@ -140,36 +175,27 @@ export const courtRouter = createTRPCRouter({
     }),
 
   createBooking: protectedProcedure
-    .input(
-      z.object({
-        timeSlotId: z.string(),
-      })
-    )
+    .input(z.object({ timeSlotId: z.string() }))
     .mutation(async ({ ctx, input }) => {
-      // Получаем слот времени
       const timeSlot = await ctx.db.timeSlot.findUnique({
         where: { id: input.timeSlotId },
         include: { court: true },
       });
 
       if (!timeSlot) {
-        throw new Error("Слот времени не найден");
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Слот не найден",
+        });
       }
 
       if (timeSlot.isBooked) {
-        throw new Error("Это время уже забронировано");
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Этот слот уже забронирован",
+        });
       }
 
-      // Проверяем, существует ли пользователь
-      const user = await ctx.db.user.findUnique({
-        where: { id: ctx.session.user.id },
-      });
-
-      if (!user) {
-        throw new Error("Пользователь не найден");
-      }
-
-      // Создаем новое бронирование
       const booking = await ctx.db.booking.create({
         data: {
           courtId: timeSlot.courtId,
@@ -179,13 +205,58 @@ export const courtRouter = createTRPCRouter({
         },
       });
 
-      // Обновляем статус слота времени
       await ctx.db.timeSlot.update({
         where: { id: input.timeSlotId },
         data: { isBooked: true },
       });
 
       return booking;
+    }),
+
+  cancelBooking: protectedProcedure
+    .input(z.object({ bookingId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const booking = await ctx.db.booking.findUnique({
+        where: { id: input.bookingId },
+        include: { court: true },
+      });
+
+      if (!booking) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Бронирование не найдено",
+        });
+      }
+
+      if (booking.userId !== ctx.session.user.id) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "У вас нет прав для отмены этого бронирования",
+        });
+      }
+
+      // Находим и обновляем слот
+      const timeSlot = await ctx.db.timeSlot.findFirst({
+        where: {
+          courtId: booking.courtId,
+          startTime: booking.startTime,
+          endTime: booking.endTime,
+        },
+      });
+
+      if (timeSlot) {
+        await ctx.db.timeSlot.update({
+          where: { id: timeSlot.id },
+          data: { isBooked: false },
+        });
+      }
+
+      // Удаляем бронирование
+      await ctx.db.booking.delete({
+        where: { id: input.bookingId },
+      });
+
+      return { success: true };
     }),
 
   getUserBookings: protectedProcedure.query(async ({ ctx }) => {

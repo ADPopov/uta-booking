@@ -8,11 +8,12 @@
  */
 
 import { initTRPC, TRPCError } from "@trpc/server";
-import superjson from "superjson";
-import { ZodError } from "zod";
-
+import { type CreateNextContextOptions } from "@trpc/server/adapters/next";
 import { auth } from "~/server/auth";
 import { db } from "~/server/db";
+import { prisma } from "~/types/prisma-client";
+import superjson from "superjson";
+import { ZodError } from "zod";
 
 /**
  * 1. CONTEXT
@@ -26,13 +27,12 @@ import { db } from "~/server/db";
  *
  * @see https://trpc.io/docs/server/context
  */
-export const createTRPCContext = async (opts: { headers: Headers }) => {
+export const createTRPCContext = async (opts: CreateNextContextOptions) => {
   const session = await auth();
 
   return {
-    db,
     session,
-    ...opts,
+    db,
   };
 };
 
@@ -121,12 +121,11 @@ export const publicProcedure = t.procedure.use(timingMiddleware);
 export const protectedProcedure = t.procedure
   .use(timingMiddleware)
   .use(({ ctx, next }) => {
-    if (!ctx.session || !ctx.session.user) {
-      throw new TRPCError({ code: "UNAUTHORIZED" });
+    if (!ctx.session?.user) {
+      throw new TRPCError({ code: "UNAUTHORIZED", message: "Необходима авторизация" });
     }
     return next({
       ctx: {
-        // infers the `session` as non-nullable
         session: { ...ctx.session, user: ctx.session.user },
       },
     });

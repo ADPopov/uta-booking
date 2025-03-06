@@ -7,12 +7,12 @@ async function main() {
   // Создаем тестового пользователя
   const hashedPassword = await hash("password123", 12);
   const user = await prisma.user.upsert({
-    where: { email: "test@example.com" },
+    where: { username: "testuser" },
     update: {},
     create: {
-      email: "test@example.com",
-      name: "Test User",
       username: "testuser",
+      name: "Test User",
+      email: "test@example.com",
       password: hashedPassword,
     },
   });
@@ -21,102 +21,98 @@ async function main() {
 
   // Создаем корты
   const courts = await Promise.all([
+    // Грунтовые корты (1-5)
     prisma.court.upsert({
-      where: { id: "1" },
+      where: { id: "clay_1" },
       update: {},
       create: {
-        id: "1",
-        name: "Корт №1",
-        description: "Крытый корт с профессиональным покрытием",
-        price: 1500,
+        id: "clay_1",
+        name: "Корт 1",
+        description: "Грунтовый корт",
+        price: 1000,
+        surface: "CLAY",
       },
     }),
     prisma.court.upsert({
-      where: { id: "2" },
+      where: { id: "clay_2" },
       update: {},
       create: {
-        id: "2",
-        name: "Корт №2",
-        description: "Открытый корт с искусственным покрытием",
+        id: "clay_2",
+        name: "Корт 2",
+        description: "Грунтовый корт",
+        price: 1000,
+        surface: "CLAY",
+      },
+    }),
+    prisma.court.upsert({
+      where: { id: "clay_3" },
+      update: {},
+      create: {
+        id: "clay_3",
+        name: "Корт 3",
+        description: "Грунтовый корт",
+        price: 1000,
+        surface: "CLAY",
+      },
+    }),
+    prisma.court.upsert({
+      where: { id: "clay_4" },
+      update: {},
+      create: {
+        id: "clay_4",
+        name: "Корт 4",
+        description: "Грунтовый корт",
+        price: 1000,
+        surface: "CLAY",
+      },
+    }),
+    prisma.court.upsert({
+      where: { id: "clay_5" },
+      update: {},
+      create: {
+        id: "clay_5",
+        name: "Корт 5",
+        description: "Грунтовый корт",
+        price: 1000,
+        surface: "CLAY",
+      },
+    }),
+    // Хардовый корт
+    prisma.court.upsert({
+      where: { id: "hard_1" },
+      update: {},
+      create: {
+        id: "hard_1",
+        name: "Корт 6",
+        description: "Хард",
         price: 1200,
-      },
-    }),
-    prisma.court.upsert({
-      where: { id: "3" },
-      update: {},
-      create: {
-        id: "3",
-        name: "Корт №3",
-        description: "Крытый корт с синтетическим покрытием",
-        price: 1300,
+        surface: "HARD",
       },
     }),
   ]);
 
   console.log({ courts });
 
-  // Создаем слоты времени для каждого корта
-  const today = new Date();
-  const utcToday = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate(), 0, 0, 0));
-
-  // Создаем слоты на сегодня
+  // Создаем временные слоты для каждого корта
   for (const court of courts) {
-    // Создаем слоты с 8:00 до 23:00 с интервалом в 1 час
     for (let hour = 8; hour < 23; hour++) {
-      const startTime = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate(), hour, 0, 0));
-      const endTime = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate(), hour + 1, 0, 0));
+      const startTime = new Date();
+      startTime.setHours(hour, 0, 0, 0);
+      const endTime = new Date();
+      endTime.setHours(hour + 1, 0, 0, 0);
 
-      await prisma.timeSlot.upsert({
-        where: {
-          courtId_startTime_endTime: {
-            courtId: court.id,
-            startTime: startTime,
-            endTime: endTime,
-          },
-        },
-        update: {},
-        create: {
+      await prisma.timeSlot.create({
+        data: {
           courtId: court.id,
-          startTime: startTime,
-          endTime: endTime,
+          startTime,
+          endTime,
           isBooked: false,
         },
       });
     }
   }
 
-  // Создаем слоты на несколько дней вперед
-  for (let dayOffset = 0; dayOffset < 30; dayOffset++) {
-    const date = new Date(today);
-    date.setDate(date.getDate() + dayOffset);
-    
-    for (const court of courts) {
-      // Создаем слоты с 8:00 до 23:00 с интервалом в 1 час
-      for (let hour = 8; hour < 23; hour++) {
-        const startTime = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), hour, 0, 0));
-        const endTime = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), hour + 1, 0, 0));
-
-        await prisma.timeSlot.upsert({
-          where: {
-            courtId_startTime_endTime: {
-              courtId: court.id,
-              startTime: startTime,
-              endTime: endTime,
-            },
-          },
-          update: {},
-          create: {
-            courtId: court.id,
-            startTime: startTime,
-            endTime: endTime,
-            isBooked: false,
-          },
-        });
-      }
-    }
-  }
-
-  console.log("Добавлены слоты времени для всех кортов");
+  console.log("Тестовые данные успешно созданы");
 }
 
 main()

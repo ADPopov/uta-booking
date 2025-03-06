@@ -61,6 +61,7 @@ model Court {
     name        String
     description String?
     price       Int
+    surface     String     @default("CLAY") // "CLAY" или "HARD"
     bookings    Booking[]
     timeSlots   TimeSlot[]
     createdAt   DateTime    @default(now())
