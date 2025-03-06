@@ -1,7 +1,13 @@
 import { PrismaClient } from "@prisma/client";
 import { hash } from "bcryptjs";
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  datasources: {
+    db: {
+      url: process.env.DATABASE_URL_UNPOOLED,
+    },
+  },
+});
 
 async function main() {
   // Создаем тестового пользователя
@@ -92,8 +98,10 @@ async function main() {
 
   // Создаем тренеров
   const trainers = await Promise.all([
-    prisma.trainer.create({
-      data: {
+    prisma.trainer.upsert({
+      where: { id: "trainer-1" },
+      update: {},
+      create: {
         id: "trainer-1",
         name: "Егор Ромашов",
         description: "Индивидуальные тренировки - 2200р, Взрослые группы - 2000р, Тренировки для турнирных игроков - 2500р",
@@ -101,8 +109,10 @@ async function main() {
         price: 2200,
       },
     }),
-    prisma.trainer.create({
-      data: {
+    prisma.trainer.upsert({
+      where: { id: "trainer-2" },
+      update: {},
+      create: {
         id: "trainer-2",
         name: "Степан Радус",
         description: "Индивидуальные тренировки - 1900р",
@@ -110,8 +120,10 @@ async function main() {
         price: 1900,
       },
     }),
-    prisma.trainer.create({
-      data: {
+    prisma.trainer.upsert({
+      where: { id: "trainer-3" },
+      update: {},
+      create: {
         id: "trainer-3",
         name: "Арсений Токарь",
         description: "Индивидуальные тренировки (взрослые) - 1800р, Индивидуальные тренировки (дети до 16 лет) - 1500р, Детские группы - 800р по абонементу/ 1000р разовое занятие, Взрослые группы - 2000р",
@@ -119,8 +131,10 @@ async function main() {
         price: 1800,
       },
     }),
-    prisma.trainer.create({
-      data: {
+    prisma.trainer.upsert({
+      where: { id: "trainer-4" },
+      update: {},
+      create: {
         id: "trainer-4",
         name: "Елизавета Хабарова",
         description: "Индивидуальные тренировки (взрослые) - 1700р, Индивидуальные тренировки (дети до 16 лет) - 1500р",
@@ -128,8 +142,10 @@ async function main() {
         price: 1700,
       },
     }),
-    prisma.trainer.create({
-      data: {
+    prisma.trainer.upsert({
+      where: { id: "trainer-5" },
+      update: {},
+      create: {
         id: "trainer-5",
         name: "Анастасия Ушакова",
         description: "Индивидуальные тренировки (взрослые) - 1700р, Индивидуальные тренировки (дети до 16 лет) - 1500р",
@@ -137,8 +153,10 @@ async function main() {
         price: 1700,
       },
     }),
-    prisma.trainer.create({
-      data: {
+    prisma.trainer.upsert({
+      where: { id: "trainer-6" },
+      update: {},
+      create: {
         id: "trainer-6",
         name: "Сергей Волков",
         description: "Индивидуальные тренировки (взрослые) - 1600р, Индивидуальные тренировки (дети до 16 лет) - 1500р",
@@ -146,8 +164,10 @@ async function main() {
         price: 1600,
       },
     }),
-    prisma.trainer.create({
-      data: {
+    prisma.trainer.upsert({
+      where: { id: "trainer-7" },
+      update: {},
+      create: {
         id: "trainer-7",
         name: "Мартин Петросян",
         description: "Индивидуальные тренировки - 1700р, Детская группа - 600р по абонементу/ 750р разовое занятие",
@@ -155,8 +175,10 @@ async function main() {
         price: 1700,
       },
     }),
-    prisma.trainer.create({
-      data: {
+    prisma.trainer.upsert({
+      where: { id: "trainer-8" },
+      update: {},
+      create: {
         id: "trainer-8",
         name: "Саида Хакимова",
         description: "Индивидуальные тренировки (взрослые) - 1600р, Индивидуальные тренировки (дети до 16 лет) - 1500р",
@@ -164,8 +186,10 @@ async function main() {
         price: 1600,
       },
     }),
-    prisma.trainer.create({
-      data: {
+    prisma.trainer.upsert({
+      where: { id: "trainer-9" },
+      update: {},
+      create: {
         id: "trainer-9",
         name: "Иван Васюра",
         description: "Индивидуальные тренировки (взрослые и дети) - 1500р, Детские группы - 800р по абонементу/ 1000р разовое занятие",
@@ -173,8 +197,10 @@ async function main() {
         price: 1500,
       },
     }),
-    prisma.trainer.create({
-      data: {
+    prisma.trainer.upsert({
+      where: { id: "trainer-10" },
+      update: {},
+      create: {
         id: "trainer-10",
         name: "Екатерина Макрушина",
         description: "Индивидуальные тренировки (взрослые) - 1800р, Индивидуальные тренировки (дети до 16 лет) - 1500р, Взрослые группы - 1500р",
@@ -182,8 +208,10 @@ async function main() {
         price: 1800,
       },
     }),
-    prisma.trainer.create({
-      data: {
+    prisma.trainer.upsert({
+      where: { id: "trainer-11" },
+      update: {},
+      create: {
         id: "trainer-11",
         name: "Ирина Каурова",
         description: "Индивидуальные тренировки (дети до 16 лет) - 1200р, Детские группы - 800р по абонементу/ 1000р разовое занятие",
@@ -191,8 +219,10 @@ async function main() {
         price: 1200,
       },
     }),
-    prisma.trainer.create({
-      data: {
+    prisma.trainer.upsert({
+      where: { id: "trainer-12" },
+      update: {},
+      create: {
         id: "trainer-12",
         name: "Марк Лаштабов",
         description: "Индивидуальные тренировки (взрослые) - 1500р, Индивидуальные тренировки (дети до 16 лет) - 1400р, Детские группы - 1000р разовое занятие",
@@ -202,34 +232,62 @@ async function main() {
     }),
   ]);
 
+  console.log({ trainers });
+
   // Создаем временные слоты для каждого корта
   const now = new Date();
   const timeSlots = [];
 
-  for (const court of courts) {
-    for (let hour = 8; hour < 23; hour++) {
-      const startTime = new Date(now);
-      startTime.setHours(hour, 0, 0, 0);
+  // Создаем слоты на ближайшие 30 дней
+  for (let day = 0; day < 30; day++) {
+    const currentDate = new Date(now);
+    currentDate.setDate(currentDate.getDate() + day);
 
-      const endTime = new Date(now);
-      endTime.setHours(hour + 1, 0, 0, 0);
+    for (const court of courts) {
+      // Создаем слоты с 8:00 до 23:00
+      for (let hour = 8; hour < 23; hour++) {
+        const startTime = new Date(currentDate);
+        startTime.setHours(hour, 0, 0, 0);
 
-      timeSlots.push(
-        prisma.timeSlot.create({
-          data: {
-            courtId: court.id,
-            startTime,
-            endTime,
-            isBooked: false,
-          },
-        })
-      );
+        const endTime = new Date(currentDate);
+        endTime.setHours(hour + 1, 0, 0, 0);
+
+        // Случайным образом делаем некоторые слоты забронированными
+        const isBooked = Math.random() < 0.3; // 30% слотов будут забронированы
+
+        timeSlots.push({
+          courtId: court.id,
+          startTime,
+          endTime,
+          isBooked,
+        });
+      }
     }
   }
 
-  await Promise.all(timeSlots);
+  // Создаем слоты пакетами по 100 штук
+  const batchSize = 100;
+  for (let i = 0; i < timeSlots.length; i += batchSize) {
+    const batch = timeSlots.slice(i, i + batchSize);
+    await Promise.all(
+      batch.map((slot) =>
+        prisma.timeSlot.upsert({
+          where: {
+            courtId_startTime_endTime: {
+              courtId: slot.courtId,
+              startTime: slot.startTime,
+              endTime: slot.endTime,
+            },
+          },
+          update: {},
+          create: slot,
+        })
+      )
+    );
+    console.log(`Created batch ${i / batchSize + 1} of ${Math.ceil(timeSlots.length / batchSize)}`);
+  }
 
-  console.log("Тестовые данные успешно созданы");
+  console.log("Created all time slots");
 }
 
 main()

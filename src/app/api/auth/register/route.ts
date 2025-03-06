@@ -5,10 +5,10 @@ import { z } from "zod";
 import { db } from "~/server/db";
 
 const registerSchema = z.object({
-  username: z.string().min(3).max(20),
-  password: z.string().min(6),
+  username: z.string().min(3, "Имя пользователя должно содержать минимум 3 символа").max(20, "Имя пользователя не должно превышать 20 символов"),
+  password: z.string().min(6, "Пароль должен содержать минимум 6 символов"),
   name: z.string().optional(),
-  email: z.string().email().optional(),
+  email: z.string().email("Введите корректный email").optional(),
 });
 
 export async function POST(req: Request) {
@@ -51,8 +51,9 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
+      const errorMessages = error.errors.map(err => err.message);
       return NextResponse.json(
-        { error: "Неверные данные", details: error.errors },
+        { error: "Ошибка валидации", details: errorMessages },
         { status: 400 }
       );
     }

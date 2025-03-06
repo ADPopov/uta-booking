@@ -2,14 +2,14 @@
 
 import { signIn, useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "~/components/ui/card";
 import { Alert, AlertDescription } from "~/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 
-export default function SignIn() {
+function SignInContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: session, status } = useSession();
@@ -115,5 +115,17 @@ export default function SignIn() {
         </CardFooter>
       </Card>
     </div>
+  );
+}
+
+export default function SignIn() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center bg-white">
+        <div className="text-gray-900">Загрузка...</div>
+      </div>
+    }>
+      <SignInContent />
+    </Suspense>
   );
 } 

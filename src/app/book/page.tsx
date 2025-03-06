@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { api } from "~/trpc/react";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
@@ -12,6 +12,7 @@ import { Calendar } from "~/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
 import { cn } from "~/lib/utils";
 import { TrainerSelect } from "./_components/trainer-select";
+import { useSession } from "next-auth/react";
 
 type TimeSlot = {
   id: string;
@@ -20,15 +21,18 @@ type TimeSlot = {
   isBooked: boolean;
   court: {
     name: string;
-    description: string;
+    description: string | null;
     price: number;
     surface: string;
     id: string;
   };
 };
 
+type GroupedSlots = Record<string, TimeSlot[]>;
+
 export default function BookPage() {
   const router = useRouter();
+  const { data: session, status } = useSession();
   const utils = api.useUtils();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
@@ -38,7 +42,7 @@ export default function BookPage() {
   const { data: timeSlots, isLoading } = api.court.getAvailableTimeSlots.useQuery(
     { date: format(selectedDate, "yyyy-MM-dd") },
     {
-      enabled: Boolean(selectedDate),
+      enabled: Boolean(selectedDate) && status === "authenticated",
     }
   );
 
@@ -48,18 +52,15 @@ export default function BookPage() {
       date: format(selectedDate, "yyyy-MM-dd"),
     },
     {
-      enabled: Boolean(selectedDate) && Boolean(selectedTrainerId),
+      enabled: Boolean(selectedDate) && Boolean(selectedTrainerId) && status === "authenticated",
     }
   );
 
-  const groupedSlots = timeSlots?.reduce((acc: Record<string, TimeSlot[]>, slot: TimeSlot) => {
-    const timeKey = format(new Date(slot.startTime), "HH:mm");
-    if (!acc[timeKey]) {
-      acc[timeKey] = [];
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/api/auth/signin");
     }
-    acc[timeKey].push(slot);
-    return acc;
-  }, {}) ?? {};
+  }, [status, router]);
 
   const createBooking = api.court.createBooking.useMutation({
     onSuccess: () => {
@@ -98,6 +99,15 @@ export default function BookPage() {
     }
   };
 
+  const groupedSlots = timeSlots?.reduce((acc: GroupedSlots, slot: TimeSlot) => {
+    const timeKey = format(new Date(slot.startTime), "HH:mm");
+    if (!acc[timeKey]) {
+      acc[timeKey] = [];
+    }
+    acc[timeKey].push(slot);
+    return acc;
+  }, {}) ?? {};
+
   // Фильтруем слоты по доступности тренера
   const availableTimeSlots = selectedTrainerId && trainerTimeSlots
     ? Object.entries(groupedSlots).reduce((acc, [time, slots]) => {
@@ -110,6 +120,22 @@ export default function BookPage() {
         return acc;
       }, {} as Record<string, TimeSlot[]>)
     : groupedSlots;
+
+  // Сортируем временные слоты
+  const sortedTimeSlots = Object.entries(availableTimeSlots)
+    .sort(([timeA], [timeB]) => timeA.localeCompare(timeB));
+
+  if (status === "loading") {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!session) {
+    return null;
+  }
 
   return (
     <div className="space-y-8">
@@ -267,24 +293,22 @@ export default function BookPage() {
         </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-          {Object.entries(availableTimeSlots)
-            .sort(([timeA], [timeB]) => timeA.localeCompare(timeB))
-            .map(([time, slots]) => (
-              <Card 
-                key={time} 
-                className="hover:bg-accent/50 transition-colors cursor-pointer"
-                onClick={() => handleTimeSelect(time)}
-              >
-                <CardContent className="flex flex-col items-center justify-center p-4">
-                  <ClockIcon className="h-6 w-6 text-primary mb-1" />
-                  <div className="text-lg font-bold mb-1">{time}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {(slots as TimeSlot[]).filter(slot => slot.court.surface === "CLAY").length} грунт. • {" "}
-                    {(slots as TimeSlot[]).filter(slot => slot.court.surface === "HARD").length} хард
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+          {sortedTimeSlots.map(([time, slots]) => (
+            <Card 
+              key={time} 
+              className="hover:bg-accent/50 transition-colors cursor-pointer"
+              onClick={() => handleTimeSelect(time)}
+            >
+              <CardContent className="flex flex-col items-center justify-center p-4">
+                <ClockIcon className="h-6 w-6 text-primary mb-1" />
+                <div className="text-lg font-bold mb-1">{time}</div>
+                <div className="text-xs text-muted-foreground">
+                  {(slots as TimeSlot[]).filter(slot => slot.court.surface === "CLAY").length} грунт. • {" "}
+                  {(slots as TimeSlot[]).filter(slot => slot.court.surface === "HARD").length} хард
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       )}
     </div>

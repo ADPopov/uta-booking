@@ -35,14 +35,21 @@ export default function Register() {
         body: JSON.stringify(data),
       });
 
+      const result = await response.json();
+
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Ошибка при регистрации");
+        if (result.details) {
+          // Если есть детали ошибок валидации, показываем их все
+          setError(result.details.join("\n"));
+        } else {
+          setError(result.error || "Ошибка при регистрации");
+        }
+        return;
       }
 
       router.push("/auth/signin?registered=true");
     } catch (error) {
-      setError(error instanceof Error ? error.message : "Ошибка при регистрации");
+      setError("Произошла ошибка при регистрации");
     } finally {
       setIsLoading(false);
     }
@@ -61,7 +68,7 @@ export default function Register() {
           {error && (
             <Alert variant="destructive" className="mb-4">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
+              <AlertDescription className="whitespace-pre-line">{error}</AlertDescription>
             </Alert>
           )}
 
@@ -81,26 +88,24 @@ export default function Register() {
 
             <div className="space-y-2">
               <label htmlFor="email" className="text-sm font-medium text-gray-700">
-                Email
+                Email (необязательно)
               </label>
               <Input
                 type="email"
                 id="email"
                 name="email"
-                required
                 className="bg-white border-gray-200 text-gray-900 placeholder:text-gray-400"
               />
             </div>
 
             <div className="space-y-2">
               <label htmlFor="name" className="text-sm font-medium text-gray-700">
-                Имя
+                Имя (необязательно)
               </label>
               <Input
                 type="text"
                 id="name"
                 name="name"
-                required
                 className="bg-white border-gray-200 text-gray-900 placeholder:text-gray-400"
               />
             </div>

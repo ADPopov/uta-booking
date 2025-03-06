@@ -5,7 +5,23 @@ import {
   publicProcedure,
 } from "~/server/api/trpc";
 import { TRPCError } from "@trpc/server";
-import type { TimeSlot } from "~/types/prisma";
+
+type TimeSlot = {
+  id: string;
+  courtId: string;
+  startTime: Date;
+  endTime: Date;
+  isBooked: boolean;
+  court: {
+    id: string;
+    name: string;
+    description: string | null;
+    price: number;
+    surface: string;
+    createdAt: Date;
+    updatedAt: Date;
+  };
+};
 
 type TimeSlotWithCourt = TimeSlot & {
   court: {
@@ -59,9 +75,11 @@ export const courtRouter = createTRPCRouter({
           throw new Error("Неверный формат даты");
         }
 
-        // Устанавливаем время в UTC
-        const startOfDay = new Date(Date.UTC(selectedDate.getUTCFullYear(), selectedDate.getUTCMonth(), selectedDate.getUTCDate(), 0, 0, 0));
-        const endOfDay = new Date(Date.UTC(selectedDate.getUTCFullYear(), selectedDate.getUTCMonth(), selectedDate.getUTCDate(), 23, 59, 59, 999));
+        // Устанавливаем время в локальном часовом поясе
+        const startOfDay = new Date(selectedDate);
+        startOfDay.setHours(8, 0, 0, 0);
+        const endOfDay = new Date(selectedDate);
+        endOfDay.setHours(23, 0, 0, 0);
 
         console.log("Диапазон поиска:", {
           startOfDay: startOfDay.toISOString(),
@@ -95,14 +113,20 @@ export const courtRouter = createTRPCRouter({
         const now = new Date();
         console.log("Текущее время:", now.toISOString());
         
-        const availableSlots = slots.filter((slot: TimeSlot) => {
+        const availableSlots = slots.filter((slot) => {
           const slotStartTime = new Date(slot.startTime);
-          const isAvailable = slotStartTime > now;
-          console.log("Слот:", {
-            startTime: slotStartTime.toISOString(),
-            isAvailable
-          });
-          return isAvailable;
+          const slotDate = new Date(slotStartTime);
+          slotDate.setHours(0, 0, 0, 0);
+          const today = new Date(now);
+          today.setHours(0, 0, 0, 0);
+          
+          // Если дата в будущем, показываем все слоты
+          if (slotDate > today) {
+            return true;
+          }
+          
+          // Если дата сегодня, показываем только будущие слоты
+          return slotStartTime > now;
         });
 
         console.log("Доступных слотов:", availableSlots.length);
@@ -139,9 +163,16 @@ export const courtRouter = createTRPCRouter({
           throw new Error("Неверный формат даты");
         }
 
-        // Устанавливаем время в UTC
-        const startOfDay = new Date(Date.UTC(selectedDate.getUTCFullYear(), selectedDate.getUTCMonth(), selectedDate.getUTCDate(), 8, 0, 0));
-        const endOfDay = new Date(Date.UTC(selectedDate.getUTCFullYear(), selectedDate.getUTCMonth(), selectedDate.getUTCDate(), 23, 0, 0));
+        // Устанавливаем время в локальном часовом поясе
+        const startOfDay = new Date(selectedDate);
+        startOfDay.setHours(8, 0, 0, 0);
+        const endOfDay = new Date(selectedDate);
+        endOfDay.setHours(23, 0, 0, 0);
+
+        console.log("Диапазон поиска:", {
+          startOfDay: startOfDay.toISOString(),
+          endOfDay: endOfDay.toISOString()
+        });
 
         // Получаем все доступные слоты для выбранной даты
         const slots = await ctx.db.timeSlot.findMany({
@@ -160,13 +191,35 @@ export const courtRouter = createTRPCRouter({
           },
         });
 
+        console.log("Найдено слотов:", slots.length);
+        console.log("Слоты:", slots.map(slot => ({
+          id: slot.id,
+          startTime: slot.startTime.toISOString(),
+          endTime: slot.endTime.toISOString(),
+          isBooked: slot.isBooked
+        })));
+
         // Фильтруем слоты, оставляя только те, которые еще не наступили
         const now = new Date();
-        const availableSlots = slots.filter((slot: TimeSlot) => {
+        console.log("Текущее время:", now.toISOString());
+        
+        const availableSlots = slots.filter((slot) => {
           const slotStartTime = new Date(slot.startTime);
+          const slotDate = new Date(slotStartTime);
+          slotDate.setHours(0, 0, 0, 0);
+          const today = new Date(now);
+          today.setHours(0, 0, 0, 0);
+          
+          // Если дата в будущем, показываем все слоты
+          if (slotDate > today) {
+            return true;
+          }
+          
+          // Если дата сегодня, показываем только будущие слоты
           return slotStartTime > now;
         });
 
+        console.log("Доступных слотов:", availableSlots.length);
         return availableSlots;
       } catch (error) {
         console.error("Ошибка при получении доступных слотов:", error);
