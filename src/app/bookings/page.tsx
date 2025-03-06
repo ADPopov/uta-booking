@@ -5,7 +5,7 @@ import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
-import { CalendarIcon, ClockIcon, CurrencyDollarIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { CalendarIcon, ClockIcon, CurrencyDollarIcon, XMarkIcon, UserIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 
 export default function BookingsPage() {
@@ -67,45 +67,55 @@ export default function BookingsPage() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Мои бронирования</h1>
         <p className="text-muted-foreground">
-          Управляйте вашими бронированиями
+          Здесь вы можете увидеть все ваши бронирования
         </p>
       </div>
 
       <div className="grid gap-4">
-        {bookings.map((booking: {
-          id: string;
-          court: {
-            name: string;
-            price: number;
-          };
-          startTime: Date;
-          endTime: Date;
-        }) => (
+        {bookings.map((booking) => (
           <Card key={booking.id}>
-            <CardContent className="flex items-center justify-between p-4">
-              <div className="space-y-1">
-                <div className="font-medium">{booking.court.name}</div>
-                <div className="text-sm text-muted-foreground">
-                  {format(new Date(booking.startTime), "PPP", { locale: ru })}
+            <CardContent className="flex flex-col p-4">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center">
+                  <CalendarIcon className="h-5 w-5 text-primary mr-2" />
+                  <div className="font-medium">
+                    {format(new Date(booking.startTime), "PPP", { locale: ru })}
+                  </div>
                 </div>
                 <div className="flex items-center text-sm text-muted-foreground">
                   <ClockIcon className="h-4 w-4 mr-1" />
-                  {format(new Date(booking.startTime), "HH:mm")} - {format(new Date(booking.endTime), "HH:mm")}
+                  {format(new Date(booking.startTime), "HH:mm")} -{" "}
+                  {format(new Date(booking.endTime), "HH:mm")}
                 </div>
               </div>
-              <div className="flex items-center gap-4">
-                <div className="flex items-center text-sm text-primary">
-                  <CurrencyDollarIcon className="h-5 w-5 mr-1" />
-                  {booking.court.price} ₽
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <div className="font-medium">{booking.court.name}</div>
+                  <div className="text-sm text-muted-foreground">
+                    {booking.court.description}
+                  </div>
+                  {booking.trainerId && (
+                    <div className="flex items-center text-sm text-primary">
+                      <UserIcon className="h-4 w-4 mr-1" />
+                      Тренер: {booking.trainer?.name ?? "Не указан"}
+                    </div>
+                  )}
                 </div>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => handleCancelBooking(booking.id)}
-                  disabled={cancelBooking.isPending}
-                >
-                  {cancelBooking.isPending ? "..." : <XMarkIcon className="h-4 w-4" />}
-                </Button>
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center text-sm text-primary">
+                    <CurrencyDollarIcon className="h-5 w-5 mr-1" />
+                    {booking.court.price} ₽
+                  </div>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => handleCancelBooking(booking.id)}
+                    disabled={cancelBooking.isPending}
+                  >
+                    {cancelBooking.isPending ? "..." : <XMarkIcon className="h-4 w-4" />}
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
