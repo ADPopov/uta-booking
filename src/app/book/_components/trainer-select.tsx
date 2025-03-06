@@ -72,11 +72,12 @@ export function TrainerSelect({ selectedDate, onSelectTrainer }: Omit<TrainerSel
               <CardContent className="flex items-center p-3">
                 <div className="flex-shrink-0 w-12 h-12 rounded-full overflow-hidden mr-3">
                   <Image
-                    src={trainer.photo}
+                    src={trainer.photo ?? "/images/trainers/trainer-1.jpg"}
                     alt={trainer.name}
                     width={48}
                     height={48}
                     className="object-cover"
+                    priority
                   />
                 </div>
                 <div className="flex-1 min-w-0">

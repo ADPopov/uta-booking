@@ -92,37 +92,112 @@ async function main() {
 
   // Создаем тренеров
   const trainers = await Promise.all([
-    prisma.trainer.upsert({
-      where: { id: "1" },
-      update: {},
-      create: {
-        id: "1",
-        name: "Александр Петров",
-        description: "Мастер спорта, опыт работы 10 лет",
-        price: 2000,
-        photo: "/trainers/trainer1.jpg",
+    prisma.trainer.create({
+      data: {
+        id: "trainer-1",
+        name: "Егор Ромашов",
+        description: "Индивидуальные тренировки - 2200р, Взрослые группы - 2000р, Тренировки для турнирных игроков - 2500р",
+        photo: "/images/trainers/trainer-1.jpg",
+        price: 2200,
       },
     }),
-    prisma.trainer.upsert({
-      where: { id: "2" },
-      update: {},
-      create: {
-        id: "2",
-        name: "Мария Иванова",
-        description: "Кандидат в мастера спорта, опыт работы 5 лет",
+    prisma.trainer.create({
+      data: {
+        id: "trainer-2",
+        name: "Степан Радус",
+        description: "Индивидуальные тренировки - 1900р",
+        photo: "/images/trainers/trainer-2.jpg",
+        price: 1900,
+      },
+    }),
+    prisma.trainer.create({
+      data: {
+        id: "trainer-3",
+        name: "Арсений Токарь",
+        description: "Индивидуальные тренировки (взрослые) - 1800р, Индивидуальные тренировки (дети до 16 лет) - 1500р, Детские группы - 800р по абонементу/ 1000р разовое занятие, Взрослые группы - 2000р",
+        photo: "/images/trainers/trainer-3.jpg",
         price: 1800,
-        photo: "/trainers/trainer2.jpg",
       },
     }),
-    prisma.trainer.upsert({
-      where: { id: "3" },
-      update: {},
-      create: {
-        id: "3",
-        name: "Дмитрий Сидоров",
-        description: "Мастер спорта международного класса, опыт работы 15 лет",
-        price: 2500,
-        photo: "/trainers/trainer3.jpg",
+    prisma.trainer.create({
+      data: {
+        id: "trainer-4",
+        name: "Елизавета Хабарова",
+        description: "Индивидуальные тренировки (взрослые) - 1700р, Индивидуальные тренировки (дети до 16 лет) - 1500р",
+        photo: "/images/trainers/trainer-4.jpg",
+        price: 1700,
+      },
+    }),
+    prisma.trainer.create({
+      data: {
+        id: "trainer-5",
+        name: "Анастасия Ушакова",
+        description: "Индивидуальные тренировки (взрослые) - 1700р, Индивидуальные тренировки (дети до 16 лет) - 1500р",
+        photo: "/images/trainers/trainer-5.jpg",
+        price: 1700,
+      },
+    }),
+    prisma.trainer.create({
+      data: {
+        id: "trainer-6",
+        name: "Сергей Волков",
+        description: "Индивидуальные тренировки (взрослые) - 1600р, Индивидуальные тренировки (дети до 16 лет) - 1500р",
+        photo: "/images/trainers/trainer-6.jpg",
+        price: 1600,
+      },
+    }),
+    prisma.trainer.create({
+      data: {
+        id: "trainer-7",
+        name: "Мартин Петросян",
+        description: "Индивидуальные тренировки - 1700р, Детская группа - 600р по абонементу/ 750р разовое занятие",
+        photo: "/images/trainers/trainer-7.jpg",
+        price: 1700,
+      },
+    }),
+    prisma.trainer.create({
+      data: {
+        id: "trainer-8",
+        name: "Саида Хакимова",
+        description: "Индивидуальные тренировки (взрослые) - 1600р, Индивидуальные тренировки (дети до 16 лет) - 1500р",
+        photo: "/images/trainers/trainer-8.jpg",
+        price: 1600,
+      },
+    }),
+    prisma.trainer.create({
+      data: {
+        id: "trainer-9",
+        name: "Иван Васюра",
+        description: "Индивидуальные тренировки (взрослые и дети) - 1500р, Детские группы - 800р по абонементу/ 1000р разовое занятие",
+        photo: "/images/trainers/trainer-9.jpg",
+        price: 1500,
+      },
+    }),
+    prisma.trainer.create({
+      data: {
+        id: "trainer-10",
+        name: "Екатерина Макрушина",
+        description: "Индивидуальные тренировки (взрослые) - 1800р, Индивидуальные тренировки (дети до 16 лет) - 1500р, Взрослые группы - 1500р",
+        photo: "/images/trainers/trainer-10.jpg",
+        price: 1800,
+      },
+    }),
+    prisma.trainer.create({
+      data: {
+        id: "trainer-11",
+        name: "Ирина Каурова",
+        description: "Индивидуальные тренировки (дети до 16 лет) - 1200р, Детские группы - 800р по абонементу/ 1000р разовое занятие",
+        photo: "/images/trainers/trainer-11.jpg",
+        price: 1200,
+      },
+    }),
+    prisma.trainer.create({
+      data: {
+        id: "trainer-12",
+        name: "Марк Лаштабов",
+        description: "Индивидуальные тренировки (взрослые) - 1500р, Индивидуальные тренировки (дети до 16 лет) - 1400р, Детские группы - 1000р разовое занятие",
+        photo: "/images/trainers/trainer-12.jpg",
+        price: 1500,
       },
     }),
   ]);
