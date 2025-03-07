@@ -82,14 +82,20 @@ model TimeSlot {
 }
 
 model Trainer {
-    id          String      @id @default(cuid())
-    name        String
-    description String?
-    photo       String?
-    price       Int
-    bookings    Booking[]
-    createdAt   DateTime    @default(now())
-    updatedAt   DateTime    @updatedAt
+    id              String      @id @default(cuid())
+    name            String
+    description     String?
+    photo           String?
+    price           Int         // Цена для взрослых
+    childrenPrice   Int         @default(0)          // Цена для детей до 16 лет
+    specialization  String[]    @default([])         // Массив специализаций
+    experience      Int         @default(0)          // Опыт работы в годах
+    achievements    String?     // Достижения тренера
+    bookings        Booking[]
+    createdAt       DateTime    @default(now())
+    updatedAt       DateTime    @updatedAt
+
+    @@map("Trainer")
 }
 
 model Booking {

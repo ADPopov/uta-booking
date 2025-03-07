@@ -2,6 +2,7 @@
 
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "~/components/ui/button";
 import { cn } from "~/lib/utils";
 import { Menu, X } from "lucide-react";
@@ -15,8 +16,13 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto px-4 flex h-16 items-center justify-between">
         <div className="flex items-center">
-          <Link href="/" className="flex items-center space-x-2">
-            <span className="text-xl font-bold">UTA Booking</span>
+          <Link href="/" className="flex items-center">
+            <Image
+              src="/images/logo.png"
+              alt="UTA Booking"
+              width={120}
+              height={32}
+            />
           </Link>
         </div>
         

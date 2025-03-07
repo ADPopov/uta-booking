@@ -13,6 +13,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover
 import { cn } from "~/lib/utils";
 import { TrainerSelect } from "./_components/trainer-select";
 import { useSession } from "next-auth/react";
+import { BookingConfirmation } from "./_components/booking-confirmation";
 
 type TimeSlot = {
   id: string;
@@ -38,6 +39,14 @@ export default function BookPage() {
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [selectedTrainerId, setSelectedTrainerId] = useState<string | null>(null);
   const [showTrainerSelect, setShowTrainerSelect] = useState(true);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
+  const [ageGroup, setAgeGroup] = useState<"adult" | "children">(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('ageGroup') as "adult" | "children" || "adult";
+    }
+    return "adult";
+  });
 
   const { data: timeSlots, isLoading } = api.court.getAvailableTimeSlots.useQuery(
     { date: format(selectedDate, "yyyy-MM-dd") },
@@ -54,6 +63,11 @@ export default function BookPage() {
     {
       enabled: Boolean(selectedDate) && Boolean(selectedTrainerId) && status === "authenticated",
     }
+  );
+
+  const { data: trainer } = api.trainer.getById.useQuery(
+    { id: selectedTrainerId ?? "" },
+    { enabled: Boolean(selectedTrainerId) }
   );
 
   useEffect(() => {
@@ -88,12 +102,21 @@ export default function BookPage() {
     setSelectedTime(time);
   };
 
-  const handleBooking = async (timeSlotId: string) => {
+  const handleBooking = (timeSlot: TimeSlot) => {
+    setSelectedSlot(timeSlot);
+    setShowConfirmation(true);
+  };
+
+  const handleConfirmBooking = async () => {
+    if (!selectedSlot) return;
+    
     try {
       await createBooking.mutateAsync({ 
-        timeSlotId,
+        timeSlotId: selectedSlot.id,
         trainerId: selectedTrainerId ?? undefined
       });
+      setShowConfirmation(false);
+      setSelectedSlot(null);
     } catch (error) {
       console.error("Ошибка при создании бронирования:", error);
     }
@@ -124,6 +147,12 @@ export default function BookPage() {
   // Сортируем временные слоты
   const sortedTimeSlots = Object.entries(availableTimeSlots)
     .sort(([timeA], [timeB]) => timeA.localeCompare(timeB));
+
+  // Сохраняем выбранную группу в localStorage
+  const handleAgeGroupChange = (group: "adult" | "children") => {
+    setAgeGroup(group);
+    localStorage.setItem('ageGroup', group);
+  };
 
   if (status === "loading") {
     return (
@@ -195,10 +224,29 @@ export default function BookPage() {
           </CardContent>
         </Card>
       ) : showTrainerSelect ? (
-        <TrainerSelect
-          selectedDate={selectedDate}
-          onSelectTrainer={handleTrainerSelect}
-        />
+        <div className="space-y-6">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold">Выберите тренера</h2>
+            <div className="flex gap-2">
+              <Button
+                variant={ageGroup === "adult" ? "default" : "outline"}
+                onClick={() => handleAgeGroupChange("adult")}
+              >
+                Для взрослых
+              </Button>
+              <Button
+                variant={ageGroup === "children" ? "default" : "outline"}
+                onClick={() => handleAgeGroupChange("children")}
+              >
+                Для детей
+              </Button>
+            </div>
+          </div>
+          <TrainerSelect
+            onSelect={(trainer) => handleTrainerSelect(trainer?.id ?? null)}
+            ageGroup={ageGroup}
+          />
+        </div>
       ) : selectedTime ? (
         <div className="space-y-8">
           <div className="flex items-center justify-between">
@@ -243,7 +291,7 @@ export default function BookPage() {
                           {slot.court.price} ₽
                         </div>
                         <Button
-                          onClick={() => handleBooking(slot.id)}
+                          onClick={() => handleBooking(slot)}
                           disabled={createBooking.isPending}
                           size="sm"
                         >
@@ -278,7 +326,7 @@ export default function BookPage() {
                           {slot.court.price} ₽
                         </div>
                         <Button
-                          onClick={() => handleBooking(slot.id)}
+                          onClick={() => handleBooking(slot)}
                           disabled={createBooking.isPending}
                           size="sm"
                         >
@@ -310,6 +358,23 @@ export default function BookPage() {
             </Card>
           ))}
         </div>
+      )}
+
+      {selectedSlot && (
+        <BookingConfirmation
+          isOpen={showConfirmation}
+          onClose={() => {
+            setShowConfirmation(false);
+            setSelectedSlot(null);
+          }}
+          onConfirm={handleConfirmBooking}
+          selectedDate={selectedDate}
+          selectedTime={selectedTime ?? ""}
+          selectedCourt={selectedSlot.court}
+          selectedTrainer={trainer ? {
+            name: trainer.name
+          } : undefined}
+        />
       )}
     </div>
   );

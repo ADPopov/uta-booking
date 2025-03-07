@@ -97,142 +97,153 @@ async function main() {
   console.log({ courts });
 
   // Создаем тренеров
-  const trainers = await Promise.all([
-    prisma.trainer.upsert({
-      where: { id: "trainer-1" },
-      update: {},
-      create: {
-        id: "trainer-1",
-        name: "Егор Ромашов",
-        description: "Индивидуальные тренировки - 2200р, Взрослые группы - 2000р, Тренировки для турнирных игроков - 2500р",
-        photo: "/images/trainers/trainer-1.jpg",
-        price: 2200,
-      },
-    }),
-    prisma.trainer.upsert({
-      where: { id: "trainer-2" },
-      update: {},
-      create: {
-        id: "trainer-2",
-        name: "Степан Радус",
-        description: "Индивидуальные тренировки - 1900р",
-        photo: "/images/trainers/trainer-2.jpg",
-        price: 1900,
-      },
-    }),
-    prisma.trainer.upsert({
-      where: { id: "trainer-3" },
-      update: {},
-      create: {
-        id: "trainer-3",
-        name: "Арсений Токарь",
-        description: "Индивидуальные тренировки (взрослые) - 1800р, Индивидуальные тренировки (дети до 16 лет) - 1500р, Детские группы - 800р по абонементу/ 1000р разовое занятие, Взрослые группы - 2000р",
-        photo: "/images/trainers/trainer-3.jpg",
-        price: 1800,
-      },
-    }),
-    prisma.trainer.upsert({
-      where: { id: "trainer-4" },
-      update: {},
-      create: {
-        id: "trainer-4",
-        name: "Елизавета Хабарова",
-        description: "Индивидуальные тренировки (взрослые) - 1700р, Индивидуальные тренировки (дети до 16 лет) - 1500р",
-        photo: "/images/trainers/trainer-4.jpg",
-        price: 1700,
-      },
-    }),
-    prisma.trainer.upsert({
-      where: { id: "trainer-5" },
-      update: {},
-      create: {
-        id: "trainer-5",
-        name: "Анастасия Ушакова",
-        description: "Индивидуальные тренировки (взрослые) - 1700р, Индивидуальные тренировки (дети до 16 лет) - 1500р",
-        photo: "/images/trainers/trainer-5.jpg",
-        price: 1700,
-      },
-    }),
-    prisma.trainer.upsert({
-      where: { id: "trainer-6" },
-      update: {},
-      create: {
-        id: "trainer-6",
-        name: "Сергей Волков",
-        description: "Индивидуальные тренировки (взрослые) - 1600р, Индивидуальные тренировки (дети до 16 лет) - 1500р",
-        photo: "/images/trainers/trainer-6.jpg",
-        price: 1600,
-      },
-    }),
-    prisma.trainer.upsert({
-      where: { id: "trainer-7" },
-      update: {},
-      create: {
-        id: "trainer-7",
-        name: "Мартин Петросян",
-        description: "Индивидуальные тренировки - 1700р, Детская группа - 600р по абонементу/ 750р разовое занятие",
-        photo: "/images/trainers/trainer-7.jpg",
-        price: 1700,
-      },
-    }),
-    prisma.trainer.upsert({
-      where: { id: "trainer-8" },
-      update: {},
-      create: {
-        id: "trainer-8",
-        name: "Саида Хакимова",
-        description: "Индивидуальные тренировки (взрослые) - 1600р, Индивидуальные тренировки (дети до 16 лет) - 1500р",
-        photo: "/images/trainers/trainer-8.jpg",
-        price: 1600,
-      },
-    }),
-    prisma.trainer.upsert({
-      where: { id: "trainer-9" },
-      update: {},
-      create: {
-        id: "trainer-9",
-        name: "Иван Васюра",
-        description: "Индивидуальные тренировки (взрослые и дети) - 1500р, Детские группы - 800р по абонементу/ 1000р разовое занятие",
-        photo: "/images/trainers/trainer-9.jpg",
-        price: 1500,
-      },
-    }),
-    prisma.trainer.upsert({
-      where: { id: "trainer-10" },
-      update: {},
-      create: {
-        id: "trainer-10",
-        name: "Екатерина Макрушина",
-        description: "Индивидуальные тренировки (взрослые) - 1800р, Индивидуальные тренировки (дети до 16 лет) - 1500р, Взрослые группы - 1500р",
-        photo: "/images/trainers/trainer-10.jpg",
-        price: 1800,
-      },
-    }),
-    prisma.trainer.upsert({
-      where: { id: "trainer-11" },
-      update: {},
-      create: {
-        id: "trainer-11",
-        name: "Ирина Каурова",
-        description: "Индивидуальные тренировки (дети до 16 лет) - 1200р, Детские группы - 800р по абонементу/ 1000р разовое занятие",
-        photo: "/images/trainers/trainer-11.jpg",
-        price: 1200,
-      },
-    }),
-    prisma.trainer.upsert({
-      where: { id: "trainer-12" },
-      update: {},
-      create: {
-        id: "trainer-12",
-        name: "Марк Лаштабов",
-        description: "Индивидуальные тренировки (взрослые) - 1500р, Индивидуальные тренировки (дети до 16 лет) - 1400р, Детские группы - 1000р разовое занятие",
-        photo: "/images/trainers/trainer-12.jpg",
-        price: 1500,
-      },
-    }),
-  ]);
+  const trainers = [
+    {
+      id: "trainer-1",
+      name: "Егор Ромашов",
+      description: "Специализируется на тренировках для взрослых и турнирных игроков",
+      photo: "/images/trainers/trainer-1.jpg",
+      price: 2200,
+      childrenPrice: 2000,
+      specialization: ["Взрослые", "Турнирные игроки"],
+      experience: 8,
+      achievements: "Мастер спорта по теннису, победитель международных турниров",
+    },
+    {
+      id: "trainer-2",
+      name: "Степан Радус",
+      description: "Профессиональный тренер для взрослых и детей",
+      photo: "/images/trainers/trainer-2.jpg",
+      price: 1900,
+      childrenPrice: 1700,
+      specialization: ["Взрослые", "Дети"],
+      experience: 5,
+      achievements: "КМС по теннису",
+    },
+    {
+      id: "trainer-3",
+      name: "Арсений Токарь",
+      description: "Опытный тренер, специализирующийся на индивидуальных и групповых занятиях",
+      photo: "/images/trainers/trainer-3.jpg",
+      price: 1800,
+      childrenPrice: 1500,
+      specialization: ["Взрослые", "Дети", "Группы"],
+      experience: 6,
+      achievements: "Тренер высшей категории",
+    },
+    {
+      id: "trainer-4",
+      name: "Елизавета Хабарова",
+      description: "Специализируется на работе со взрослыми и детьми",
+      photo: "/images/trainers/trainer-4.jpg",
+      price: 1700,
+      childrenPrice: 1500,
+      specialization: ["Взрослые", "Дети"],
+      experience: 4,
+      achievements: "КМС по теннису",
+    },
+    {
+      id: "trainer-5",
+      name: "Анастасия Ушакова",
+      description: "Профессиональный тренер для взрослых и детей",
+      photo: "/images/trainers/trainer-5.jpg",
+      price: 1700,
+      childrenPrice: 1500,
+      specialization: ["Взрослые", "Дети"],
+      experience: 5,
+      achievements: "Мастер спорта по теннису",
+    },
+    {
+      id: "trainer-6",
+      name: "Сергей Волков",
+      description: "Специализируется на индивидуальных тренировках",
+      photo: "/images/trainers/trainer-6.jpg",
+      price: 1600,
+      childrenPrice: 1500,
+      specialization: ["Взрослые", "Дети"],
+      experience: 3,
+      achievements: "КМС по теннису",
+    },
+    {
+      id: "trainer-7",
+      name: "Мартин Петросян",
+      description: "Опытный тренер для всех возрастов и уровней подготовки",
+      photo: "/images/trainers/trainer-7.jpg",
+      price: 1700,
+      childrenPrice: 1500,
+      specialization: ["Взрослые", "Дети", "Группы"],
+      experience: 7,
+      achievements: "Тренер высшей категории",
+    },
+    {
+      id: "trainer-8",
+      name: "Саида Хакимова",
+      description: "Специализируется на индивидуальных тренировках",
+      photo: "/images/trainers/trainer-8.jpg",
+      price: 1600,
+      childrenPrice: 1500,
+      specialization: ["Взрослые", "Дети"],
+      experience: 4,
+      achievements: "КМС по теннису",
+    },
+    {
+      id: "trainer-9",
+      name: "Иван Васюра",
+      description: "Тренер для всех возрастных групп",
+      photo: "/images/trainers/trainer-9.jpg",
+      price: 1500,
+      childrenPrice: 1500,
+      specialization: ["Взрослые", "Дети", "Группы"],
+      experience: 5,
+      achievements: "Тренер первой категории",
+    },
+    {
+      id: "trainer-10",
+      name: "Екатерина Макрушина",
+      description: "Опытный тренер для индивидуальных и групповых занятий",
+      photo: "/images/trainers/trainer-10.jpg",
+      price: 1800,
+      childrenPrice: 1500,
+      specialization: ["Взрослые", "Дети", "Группы"],
+      experience: 6,
+      achievements: "Мастер спорта по теннису",
+    },
+    {
+      id: "trainer-11",
+      name: "Ирина Каурова",
+      description: "Специализируется на работе с детьми",
+      photo: "/images/trainers/trainer-11.jpg",
+      price: 1200,
+      childrenPrice: 1200,
+      specialization: ["Дети", "Группы"],
+      experience: 3,
+      achievements: "Специализация на работе с детьми",
+    },
+    {
+      id: "trainer-12",
+      name: "Марк Лаштабов",
+      description: "Тренер для всех возрастных групп",
+      photo: "/images/trainers/trainer-12.jpg",
+      price: 1500,
+      childrenPrice: 1400,
+      specialization: ["Взрослые", "Дети", "Группы"],
+      experience: 4,
+      achievements: "Тренер первой категории",
+    },
+  ];
 
   console.log({ trainers });
+
+  // Создаем тренеров
+  await Promise.all(
+    trainers.map((trainer) =>
+      prisma.trainer.upsert({
+        where: { id: trainer.id },
+        update: trainer,
+        create: trainer,
+      })
+    )
+  );
 
   // Создаем временные слоты для каждого корта
   const now = new Date();
