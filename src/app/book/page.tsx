@@ -14,6 +14,7 @@ import { cn } from "~/lib/utils";
 import { TrainerSelect } from "./_components/trainer-select";
 import { useSession } from "next-auth/react";
 import { BookingConfirmation } from "./_components/booking-confirmation";
+import type { Trainer } from "~/server/api/routers/trainer";
 
 type TimeSlot = {
   id: string;
@@ -38,6 +39,8 @@ export default function BookPage() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [selectedTrainerId, setSelectedTrainerId] = useState<string | null>(null);
+  const [selectedTrainer, setSelectedTrainer] = useState<Trainer | null>(null);
+  const [isSplitTraining, setIsSplitTraining] = useState(false);
   const [showTrainerSelect, setShowTrainerSelect] = useState(true);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
@@ -93,8 +96,10 @@ export default function BookPage() {
     }
   };
 
-  const handleTrainerSelect = (trainerId: string | null) => {
-    setSelectedTrainerId(trainerId);
+  const handleTrainerSelect = (trainer: Trainer | null, isSplit: boolean = false) => {
+    setSelectedTrainer(trainer);
+    setSelectedTrainerId(trainer?.id ?? null);
+    setIsSplitTraining(isSplit);
     setShowTrainerSelect(false);
   };
 
@@ -113,7 +118,8 @@ export default function BookPage() {
     try {
       await createBooking.mutateAsync({ 
         timeSlotId: selectedSlot.id,
-        trainerId: selectedTrainerId ?? undefined
+        trainerId: selectedTrainerId ?? undefined,
+        isSplitTraining: isSplitTraining
       });
       setShowConfirmation(false);
       setSelectedSlot(null);
@@ -243,7 +249,7 @@ export default function BookPage() {
             </div>
           </div>
           <TrainerSelect
-            onSelect={(trainer) => handleTrainerSelect(trainer?.id ?? null)}
+            onSelect={(trainer) => handleTrainerSelect(trainer, false)}
             ageGroup={ageGroup}
           />
         </div>
@@ -273,34 +279,36 @@ export default function BookPage() {
           <div className="space-y-2">
             <h3 className="text-lg font-medium">Грунтовые корты</h3>
             <div className="grid gap-4">
-              {(availableTimeSlots[selectedTime] as TimeSlot[])
-                .filter((slot) => slot.court.surface === "CLAY")
-                .sort((a, b) => a.court.id.localeCompare(b.court.id))
-                .map((slot) => (
-                  <Card key={slot.id} className="hover:bg-accent/50 transition-colors">
-                    <CardContent className="flex items-center justify-between p-4">
-                      <div className="space-y-1">
-                        <div className="font-medium">{slot.court.name}</div>
-                        <div className="text-sm text-muted-foreground line-clamp-1">
-                          {slot.court.description}
+              {selectedTime && availableTimeSlots[selectedTime] && (
+                availableTimeSlots[selectedTime]
+                  .filter((slot) => slot.court.surface === "CLAY")
+                  .sort((a, b) => a.court.id.localeCompare(b.court.id))
+                  .map((slot) => (
+                    <Card key={slot.id} className="hover:bg-accent/50 transition-colors">
+                      <CardContent className="flex items-center justify-between p-4">
+                        <div className="space-y-1">
+                          <div className="font-medium">{slot.court.name}</div>
+                          <div className="text-sm text-muted-foreground line-clamp-1">
+                            {slot.court.description}
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center text-sm text-primary">
-                          <CurrencyDollarIcon className="h-5 w-5 mr-1" />
-                          {slot.court.price} ₽
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center text-sm text-primary">
+                            <CurrencyDollarIcon className="h-5 w-5 mr-1" />
+                            {slot.court.price} ₽
+                          </div>
+                          <Button
+                            onClick={() => handleBooking(slot)}
+                            disabled={createBooking.isPending}
+                            size="sm"
+                          >
+                            {createBooking.isPending ? "..." : "Забронировать"}
+                          </Button>
                         </div>
-                        <Button
-                          onClick={() => handleBooking(slot)}
-                          disabled={createBooking.isPending}
-                          size="sm"
-                        >
-                          {createBooking.isPending ? "..." : "Забронировать"}
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                      </CardContent>
+                    </Card>
+                  ))
+              )}
             </div>
           </div>
 
@@ -308,34 +316,36 @@ export default function BookPage() {
           <div className="space-y-2">
             <h3 className="text-lg font-medium">Хардовые корты</h3>
             <div className="grid gap-4">
-              {(availableTimeSlots[selectedTime] as TimeSlot[])
-                .filter((slot) => slot.court.surface === "HARD")
-                .sort((a, b) => a.court.id.localeCompare(b.court.id))
-                .map((slot) => (
-                  <Card key={slot.id} className="hover:bg-accent/50 transition-colors">
-                    <CardContent className="flex items-center justify-between p-4">
-                      <div className="space-y-1">
-                        <div className="font-medium">{slot.court.name}</div>
-                        <div className="text-sm text-muted-foreground line-clamp-1">
-                          {slot.court.description}
+              {selectedTime && availableTimeSlots[selectedTime] && (
+                availableTimeSlots[selectedTime]
+                  .filter((slot) => slot.court.surface === "HARD")
+                  .sort((a, b) => a.court.id.localeCompare(b.court.id))
+                  .map((slot) => (
+                    <Card key={slot.id} className="hover:bg-accent/50 transition-colors">
+                      <CardContent className="flex items-center justify-between p-4">
+                        <div className="space-y-1">
+                          <div className="font-medium">{slot.court.name}</div>
+                          <div className="text-sm text-muted-foreground line-clamp-1">
+                            {slot.court.description}
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center text-sm text-primary">
-                          <CurrencyDollarIcon className="h-5 w-5 mr-1" />
-                          {slot.court.price} ₽
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center text-sm text-primary">
+                            <CurrencyDollarIcon className="h-5 w-5 mr-1" />
+                            {slot.court.price} ₽
+                          </div>
+                          <Button
+                            onClick={() => handleBooking(slot)}
+                            disabled={createBooking.isPending}
+                            size="sm"
+                          >
+                            {createBooking.isPending ? "..." : "Забронировать"}
+                          </Button>
                         </div>
-                        <Button
-                          onClick={() => handleBooking(slot)}
-                          disabled={createBooking.isPending}
-                          size="sm"
-                        >
-                          {createBooking.isPending ? "..." : "Забронировать"}
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                      </CardContent>
+                    </Card>
+                  ))
+              )}
             </div>
           </div>
         </div>
@@ -371,9 +381,12 @@ export default function BookPage() {
           selectedDate={selectedDate}
           selectedTime={selectedTime ?? ""}
           selectedCourt={selectedSlot.court}
-          selectedTrainer={trainer ? {
-            name: trainer.name
+          selectedTrainer={selectedTrainer ? {
+            name: selectedTrainer.name,
+            price: selectedTrainer.price,
+            childrenPrice: selectedTrainer.childrenPrice
           } : undefined}
+          isSplitTraining={isSplitTraining}
         />
       )}
     </div>

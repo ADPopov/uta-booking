@@ -96,16 +96,40 @@ export default function BookingsPage() {
                     {booking.court.description}
                   </div>
                   {booking.trainerId && (
-                    <div className="flex items-center text-sm text-primary">
-                      <UserIcon className="h-4 w-4 mr-1" />
-                      Тренер: {booking.trainer?.name ?? "Не указан"}
+                    <div className="space-y-1">
+                      <div className="flex items-center text-sm text-primary">
+                        <UserIcon className="h-4 w-4 mr-1" />
+                        Тренер: {booking.trainer?.name ?? "Не указан"}
+                      </div>
+                      {booking.isSplitTraining && (
+                        <div className="text-sm text-gray-600">
+                          Сплит-тренировка (+1000₽ с человека)
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
                 <div className="flex items-center gap-4">
-                  <div className="flex items-center text-sm text-primary">
-                    <CurrencyDollarIcon className="h-5 w-5 mr-1" />
-                    {booking.court.price} ₽
+                  <div className="flex flex-col items-end">
+                    <div className="flex items-center text-sm text-primary">
+                      <CurrencyDollarIcon className="h-5 w-5 mr-1" />
+                      {booking.court.price} ₽
+                    </div>
+                    {booking.trainerId && (
+                      <>
+                        <div className="text-sm text-gray-600">
+                          + {booking.trainer?.price ?? 0} ₽ (тренер)
+                        </div>
+                        {booking.isSplitTraining && (
+                          <div className="text-sm text-gray-600">
+                            + 2000 ₽ (сплит)
+                          </div>
+                        )}
+                        <div className="text-sm font-semibold text-primary mt-1">
+                          Итого: {booking.court.price + (booking.trainer?.price ?? 0) + (booking.isSplitTraining ? 2000 : 0)} ₽
+                        </div>
+                      </>
+                    )}
                   </div>
                   <Button
                     variant="destructive"

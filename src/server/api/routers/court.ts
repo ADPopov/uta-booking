@@ -228,9 +228,10 @@ export const courtRouter = createTRPCRouter({
     }),
 
   createBooking: protectedProcedure
-    .input(z.object({ 
+    .input(z.object({
       timeSlotId: z.string(),
       trainerId: z.string().optional(),
+      isSplitTraining: z.boolean().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const timeSlot = await ctx.db.timeSlot.findUnique({
@@ -239,51 +240,26 @@ export const courtRouter = createTRPCRouter({
       });
 
       if (!timeSlot) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Слот не найден",
-        });
+        throw new Error("Временной слот не найден");
       }
 
       if (timeSlot.isBooked) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Этот слот уже забронирован",
-        });
+        throw new Error("Этот слот уже забронирован");
       }
 
-      // Проверяем, не забронирован ли тренер на это время
-      if (input.trainerId) {
-        const trainerBooking = await ctx.db.booking.findFirst({
-          where: {
-            trainerId: input.trainerId,
-            startTime: timeSlot.startTime,
-            endTime: timeSlot.endTime,
-          },
-        });
-
-        if (trainerBooking) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "Тренер уже занят на это время",
-          });
-        }
-      }
-
-      // Создаем бронирование
       const booking = await ctx.db.booking.create({
         data: {
+          startTime: timeSlot.startTime,
+          endTime: timeSlot.endTime,
           courtId: timeSlot.courtId,
           userId: ctx.session.user.id,
           trainerId: input.trainerId,
-          startTime: timeSlot.startTime,
-          endTime: timeSlot.endTime,
+          isSplitTraining: input.isSplitTraining ?? false,
         },
       });
 
-      // Обновляем статус слота
       await ctx.db.timeSlot.update({
-        where: { id: input.timeSlotId },
+        where: { id: timeSlot.id },
         data: { isBooked: true },
       });
 
@@ -336,23 +312,28 @@ export const courtRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  getUserBookings: protectedProcedure.query(async ({ ctx }) => {
-    const bookings = await ctx.db.booking.findMany({
-      where: {
-        userId: ctx.session.user.id,
-        startTime: {
-          gte: new Date(),
+  getUserBookings: protectedProcedure
+    .query(async ({ ctx }) => {
+      const bookings = await ctx.db.booking.findMany({
+        where: {
+          userId: ctx.session.user.id,
         },
-      },
-      include: {
-        court: true,
-        trainer: true,
-      },
-      orderBy: {
-        startTime: "asc",
-      },
-    });
+        include: {
+          court: true,
+          trainer: {
+            select: {
+              id: true,
+              name: true,
+              price: true,
+              childrenPrice: true,
+            },
+          },
+        },
+        orderBy: {
+          startTime: "desc",
+        },
+      });
 
-    return bookings;
-  }),
+      return bookings;
+    }),
 }); 

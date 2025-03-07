@@ -100,16 +100,23 @@ model Trainer {
 
 model Booking {
     id        String   @id @default(cuid())
-    courtId   String
-    userId    String
-    trainerId String?
     startTime DateTime
     endTime   DateTime
-    court     Court    @relation(fields: [courtId], references: [id], onDelete: Cascade)
-    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-    trainer   Trainer? @relation(fields: [trainerId], references: [id], onDelete: SetNull)
+    userId    String
+    courtId   String
+    trainerId String?
+    isSplitTraining Boolean @default(false)
+
+    user    User    @relation(fields: [userId], references: [id])
+    court   Court   @relation(fields: [courtId], references: [id])
+    trainer Trainer? @relation(fields: [trainerId], references: [id])
+
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
+
+    @@index([userId])
+    @@index([courtId])
+    @@index([trainerId])
 }
 
 model VerificationToken {

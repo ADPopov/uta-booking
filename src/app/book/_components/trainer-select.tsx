@@ -35,13 +35,13 @@ export function TrainerSelect({ onSelect, ageGroup }: TrainerSelectProps) {
   }
 
   // Фильтруем тренеров по специализации
-  const filteredTrainers = trainers.filter(trainer => {
+  const filteredTrainers = trainers?.filter(trainer => {
     if (ageGroup === "children") {
       return trainer.specialization.includes("Дети");
     } else {
       return trainer.specialization.includes("Взрослые");
     }
-  });
+  }) ?? [];
 
   if (filteredTrainers.length === 0) {
     return (
@@ -62,7 +62,7 @@ export function TrainerSelect({ onSelect, ageGroup }: TrainerSelectProps) {
       onSelect(null, false);
     } else {
       setSelectedTrainerId(trainer.id);
-      onSelect(trainer, isSplitTraining);
+      onSelect(trainer, split || isSplitTraining);
     }
   };
 
@@ -83,11 +83,12 @@ export function TrainerSelect({ onSelect, ageGroup }: TrainerSelectProps) {
             isSplitTraining ? "ring-2 ring-primary" : ""
           }`}
           onClick={() => {
-            setIsSplitTraining(!isSplitTraining);
+            const newSplitValue = !isSplitTraining;
+            setIsSplitTraining(newSplitValue);
             if (selectedTrainerId) {
-              const selectedTrainer = trainers.find(t => t.id === selectedTrainerId);
+              const selectedTrainer = trainers?.find(t => t.id === selectedTrainerId);
               if (selectedTrainer) {
-                onSelect(selectedTrainer, !isSplitTraining);
+                onSelect(selectedTrainer, newSplitValue);
               }
             }
           }}
@@ -98,7 +99,7 @@ export function TrainerSelect({ onSelect, ageGroup }: TrainerSelectProps) {
             <p className="text-xs text-gray-500 mt-1">+1000₽ с человека к стоимости тренера</p>
           </div>
         </Card>
-        {filteredTrainers.map((trainer) => (
+        {filteredTrainers?.map((trainer) => (
           <Card
             key={trainer.id}
             className={`cursor-pointer p-4 transition-all hover:shadow-lg ${
@@ -118,9 +119,6 @@ export function TrainerSelect({ onSelect, ageGroup }: TrainerSelectProps) {
               )}
               <div className="flex-1">
                 <h3 className="font-semibold">{trainer.name}</h3>
-                {trainer.description && (
-                  <p className="text-sm text-gray-600">{trainer.description}</p>
-                )}
                 <div className="mt-2">
                   <p className="text-lg font-bold text-primary">
                     {ageGroup === "children" ? trainer.childrenPrice : trainer.price} ₽/час
@@ -131,31 +129,26 @@ export function TrainerSelect({ onSelect, ageGroup }: TrainerSelectProps) {
                     )}
                   </p>
                 </div>
-                {trainer.specialization && trainer.specialization.length > 0 && (
-                  <div className="mt-2">
-                    <p className="text-sm font-medium">Специализация:</p>
-                    <div className="flex flex-wrap gap-1">
-                      {trainer.specialization.map((spec, index) => (
-                        <span
-                          key={index}
-                          className="rounded-full bg-gray-100 px-2 py-1 text-xs"
-                        >
-                          {spec}
-                        </span>
-                      ))}
-                    </div>
+                <div className="mt-2 space-y-1">
+                  <div className="flex items-center gap-1 flex-wrap">
+                    {trainer.specialization.map((spec: string, index: number) => (
+                      <Badge key={index} variant="secondary" className="flex items-center gap-1 text-xs py-0.5">
+                        <AcademicCapIcon className="h-3 w-3" />
+                        {spec}
+                      </Badge>
+                    ))}
                   </div>
-                )}
-                {trainer.experience > 0 && (
-                  <p className="mt-1 text-sm">
-                    Опыт работы: {trainer.experience} лет
-                  </p>
-                )}
-                {trainer.achievements && (
-                  <p className="mt-1 text-sm text-gray-600">
-                    {trainer.achievements}
-                  </p>
-                )}
+                  <div className="flex items-center text-sm text-gray-600">
+                    <ClockIcon className="h-4 w-4 mr-1" />
+                    Опыт: {trainer.experience} лет
+                  </div>
+                  {trainer.achievements && (
+                    <div className="flex items-start text-sm text-gray-600">
+                      <TrophyIcon className="h-4 w-4 mr-1 mt-0.5" />
+                      <span className="flex-1">{trainer.achievements}</span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </Card>
